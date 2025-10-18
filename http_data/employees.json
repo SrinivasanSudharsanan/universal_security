@@ -1,0 +1,5 @@
+{"id": 1, "name": "Alice Johnson", "department": "Engineering", "salary": 80000, "access_level": "confidential", "timestamp": "2024-01-01T00:00:00Z"}
+{"id": 2, "name": "Bob Smith", "department": "Sales", "salary": 60000, "access_level": "restricted", "timestamp": "2024-01-01T00:00:00Z"}
+{"id": 3, "name": "Carol Davis", "department": "HR", "salary": 70000, "access_level": "confidential", "timestamp": "2024-01-01T00:00:00Z"}
+{"id": 4, "name": "David Wilson", "department": "Engineering", "salary": 90000, "access_level": "confidential", "timestamp": "2024-01-01T00:00:00Z"}
+{"id": 5, "name": "Eva Brown", "department": "Marketing", "salary": 55000, "access_level": "public", "timestamp": "2024-01-01T00:00:00Z"}

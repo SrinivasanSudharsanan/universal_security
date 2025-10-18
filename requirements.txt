@@ -1,0 +1,10 @@
+pandas>=1.5.0
+fastapi>=0.68.0
+uvicorn>=0.15.0
+pydantic>=1.8.0
+sqlalchemy>=1.4.0
+databricks-sql-connector>=2.0.0
+snowflake-connector-python>=2.7.0
+pydruid>=0.6.0
+pyiceberg>=0.3.0
+python-multipart>=0.0.5

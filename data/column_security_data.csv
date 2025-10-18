@@ -1,0 +1,5 @@
+id,ssn,email,phone,address,credit_card,medical_info,public_info
+1,123-45-6789,alice@company.com,555-0101,123 Main St,4111-1111-1111-1111,Blood Type: O+,Alice Engineer
+2,987-65-4321,bob@company.com,555-0102,456 Oak Ave,5500-0000-0000-0004,Allergy: Peanuts,Bob Salesman
+3,456-78-9123,charlie@company.com,555-0103,789 Pine St,3400-0000-0000-009,Condition: Asthma,Charlie HR
+4,321-54-9876,diana@company.com,555-0104,321 Elm St,6011-0000-0000-0004,Blood Type: A+,Diana Manager

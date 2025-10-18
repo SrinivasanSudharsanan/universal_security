@@ -1,0 +1,9 @@
+id,employee_id,department,salary,access_level,manager_id,project_code,hire_date
+1,1001,Engineering,80000,confidential,1004,ENG-2023,2023-01-15
+2,1002,Sales,60000,restricted,1002,SALES-Q1,2023-02-20
+3,1003,HR,70000,confidential,1003,HR-POLICY,2023-03-10
+4,1004,Engineering,90000,confidential,1004,ENG-LEAD,2022-11-05
+5,1005,Sales,45000,public,SALES-TRN,2023-06-01
+6,1006,Engineering,85000,confidential,1004,ENG-2023,2023-04-12
+7,1007,Sales,65000,restricted,1002,SALES-Q2,2023-05-18
+8,1008,HR,95000,confidential,1003,HR-COMP,2022-08-22

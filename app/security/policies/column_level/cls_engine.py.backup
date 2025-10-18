@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""
+Universal Column-Level Security Engine
+Works across PostgreSQL, MySQL, Druid, Snowflake, etc.
+"""
+
+import logging
+from typing import List, Dict, Any, Set, Optional
+from enum import Enum
+import re
+
+logger = logging.getLogger(__name__)
+
+class MaskType(Enum):
+    """Data masking types supported across all databases"""
+    FULL = "full"
+    PARTIAL = "partial" 
+    EMAIL = "email"
+    PHONE = "phone"
+    HASH = "hash"
+    CUSTOM = "custom"
+
+class ColumnAccess(Enum):
+    """Column access levels"""
+    FULL = "full"
+    MASKED = "masked"
+    DENIED = "denied"
+
+class UniversalClsEngine:
+    """
+    Universal Column-Level Security Engine
+    Provides consistent CLS across all database types
+    """
+    
+    def __init__(self, database_query_function):
+        self.database_query_function = database_query_function
+        self.policy_cache = {}
+        self.mask_functions = self._initialize_mask_functions()
+    
+    def _initialize_mask_functions(self) -> Dict:
+        """Initialize universal masking functions"""
+        return {
+            MaskType.FULL: self._mask_full,
+            MaskType.PARTIAL: self._mask_partial,
+            MaskType.EMAIL: self._mask_email,
+            MaskType.PHONE: self._mask_phone,
+            MaskType.HASH: self._mask_hash
+        }
+    
+    async def initialize_engine(self):
+        """Initialize the CLS engine and load policies"""
+        await self._load_policies()
+        logger.info("Universal CLS Engine initialized")
+    
+    async def _load_policies(self):
+        """Load CLS policies from database"""
+        try:
+            policies = await self.database_query_function("""
+                SELECT 
+                    cp.policy_id,
+                    cp.policy_name,
+                    r.role_name,
+                    t.table_name,
+                    c.column_name,
+                    cp.access_type,
+                    cp.mask_type,
+                    cp.custom_mask_rule,
+                    cp.is_active
+                FROM security_cls_policies cp
+                JOIN security_roles r ON cp.role_id = r.role_id
+                JOIN security_columns c ON cp.column_id = c.column_id
+                JOIN security_tables t ON c.table_id = t.table_id
+                WHERE cp.is_active = true
+                ORDER BY t.table_name, c.column_name, r.role_name
+            """)
+            
+            # Cache policies by table -> column -> role
+            for policy in policies:
+                table = policy['table_name']
+                column = policy['column_name']
+                role = policy['role_name']
+                
+                if table not in self.policy_cache:
+                    self.policy_cache[table] = {}
+                if column not in self.policy_cache[table]:
+                    self.policy_cache[table][column] = {}
+                
+                self.policy_cache[table][column][role] = {
+                    'access_type': policy['access_type'],
+                    'mask_type': policy['mask_type'],
+                    'custom_mask_rule': policy['custom_mask_rule'],
+                    'policy_name': policy['policy_name']
+                }
+            
+            logger.info(f"Loaded {len(policies)} CLS policies")
+            
+        except Exception as e:
+            logger.error(f"Failed to load CLS policies: {e}")
+            # Fallback to empty policies
+            self.policy_cache = {}
+    
+    async def get_column_access(
+        self, 
+        user_roles: List[str], 
+        table_name: str, 
+        column_name: str
+    ) -> Dict[str, Any]:
+        """
+        Get column access level for user roles
+        Returns: {access_type, mask_type, custom_mask_rule}
+        """
+        # Default to full access if no policies exist
+        if (table_name not in self.policy_cache or 
+            column_name not in self.policy_cache[table_name]):
+            return {'access_type': 'allow', 'mask_type': None}
+        
+        column_policies = self.policy_cache[table_name][column_name]
+        
+        # Check each user role against policies
+        for role in user_roles:
+            if role in column_policies:
+                policy = column_policies[role]
+                return {
+                    'access_type': policy['access_type'],
+                    'mask_type': policy['mask_type'],
+                    'custom_mask_rule': policy['custom_mask_rule']
+                }
+        
+        # Default deny if no matching policies
+        return {'access_type': 'deny', 'mask_type': None}
+    
+    async def get_allowed_columns(
+        self, 
+        user_roles: List[str], 
+        table_name: str,
+        engine_type: str = "postgres"
+    ) -> List[str]:
+        """
+        Get list of allowed columns for user roles
+        Universal across all database engines
+        """
+        if table_name not in self.policy_cache:
+            # If no policies for table, return empty (will be handled by query rewriter)
+            return []
+        
+        allowed_columns = []
+        table_policies = self.policy_cache[table_name]
+        
+        for column_name, role_policies in table_policies.items():
+            for role in user_roles:
+                if role in role_policies:
+                    policy = role_policies[role]
+                    if policy['access_type'] in ['allow', 'mask']:
+                        allowed_columns.append(column_name)
+                    break  # First matching role determines access
+        
+        return allowed_columns
+    
+    def apply_column_masking(
+        self, 
+        data: Any, 
+        mask_type: str, 
+        custom_rule: str = None,
+        engine_type: str = "postgres"
+    ) -> Any:
+        """
+        Apply data masking consistently across all databases
+        """
+        if data is None:
+            return None
+        
+        try:
+            mask_enum = MaskType(mask_type) if mask_type else MaskType.FULL
+            mask_function = self.mask_functions.get(mask_enum, self._mask_full)
+            return mask_function(data, custom_rule)
+        except Exception as e:
+            logger.warning(f"Masking failed, using full mask: {e}")
+            return self._mask_full(data)
+    
+    def _mask_full(self, data: Any, custom_rule: str = None) -> str:
+        """Full data masking"""
+        return "***"
+    
+    def _mask_partial(self, data: Any, custom_rule: str = None) -> str:
+        """Partial data masking - shows first and last characters"""
+        data_str = str(data)
+        if len(data_str) <= 4:
+            return "****"
+        return data_str[:2] + "***" + data_str[-2:]
+    
+    def _mask_email(self, data: Any, custom_rule: str = None) -> str:
+        """Email address masking"""
+        email = str(data)
+        if '@' not in email:
+            return self._mask_partial(email)
+        
+        username, domain = email.split('@', 1)
+        masked_username = username[0] + "***" + username[-1] if len(username) > 2 else "***"
+        return f"{masked_username}@{domain}"
+    
+    def _mask_phone(self, data: Any, custom_rule: str = None) -> str:
+        """Phone number masking"""
+        phone = re.sub(r'\D', '', str(data))  # Remove non-digits
+        if len(phone) >= 10:
+            return f"***-***-{phone[-4:]}"
+        return "***-***-****"
+    
+    def _mask_hash(self, data: Any, custom_rule: str = None) -> str:
+        """Hash-based masking"""
+        return f"hash_{hash(str(data)) % 10000:04d}"
+    
+    async def rewrite_sql_select(
+        self, 
+        original_sql: str, 
+        user_roles: List[str],
+        engine_type: str = "postgres"
+    ) -> str:
+        """
+        Rewrite SQL SELECT query to enforce column-level security
+        Universal across database engines
+        """
+        try:
+            # Parse table name from SQL (simplified - in production use proper SQL parser)
+            table_match = re.search(r'FROM\s+(\w+)', original_sql, re.IGNORECASE)
+            if not table_match:
+                return original_sql
+            
+            table_name = table_match.group(1)
+            
+            # Get allowed columns for this user/table
+            allowed_columns = await self.get_allowed_columns(user_roles, table_name, engine_type)
+            
+            if not allowed_columns:
+                # No access to any columns - return empty result query
+                return self._create_no_access_query(original_sql, engine_type)
+            
+            # Handle SELECT * queries
+            if re.search(r'SELECT\s+\*', original_sql, re.IGNORECASE):
+                return self._rewrite_select_all(original_sql, allowed_columns, engine_type)
+            
+            # Handle explicit column lists
+            return self._rewrite_explicit_columns(original_sql, allowed_columns, table_name, engine_type)
+            
+        except Exception as e:
+            logger.error(f"SQL rewriting failed: {e}")
+            return original_sql  # Fallback to original query
+    
+    def _create_no_access_query(self, original_sql: str, engine_type: str) -> str:
+        """Create query that returns no results when user has no column access"""
+        if engine_type in ["postgres", "mysql"]:
+            return "SELECT 1 WHERE 1=0"  # Standard SQL
+        elif engine_type == "druid":
+            return "SELECT 1 FROM (SELECT 1) WHERE 1=0"  # Druid compatible
+        else:
+            return "SELECT 1 WHERE 1=0"  # Generic fallback
+    
+    def _rewrite_select_all(self, original_sql: str, allowed_columns: List[str], engine_type: str) -> str:
+        """Rewrite SELECT * queries to explicit column lists"""
+        if not allowed_columns:
+            return self._create_no_access_query(original_sql, engine_type)
+        
+        columns_str = ", ".join(allowed_columns)
+        return re.sub(r'SELECT\s+\*', f'SELECT {columns_str}', original_sql, flags=re.IGNORECASE)
+    
+    def _rewrite_explicit_columns(
+        self, 
+        original_sql: str, 
+        allowed_columns: List[str], 
+        table_name: str,
+        engine_type: str
+    ) -> str:
+        """Rewrite queries with explicit column lists"""
+        # This is a simplified implementation
+        # In production, use proper SQL parsing library
+        return original_sql  # Placeholder - will be enhanced
+    
+    def get_engine_status(self) -> Dict[str, Any]:
+        """Get CLS engine status and statistics"""
+        total_policies = 0
+        tables_covered = len(self.policy_cache)
+        
+        for table_policies in self.policy_cache.values():
+            total_policies += len(table_policies)
+        
+        return {
+            "engine_type": "universal_cls",
+            "status": "active",
+            "tables_covered": tables_covered,
+            "total_policies": total_policies,
+            "mask_types_supported": [mt.value for mt in MaskType]
+        }
+
+# Backward compatibility
+ClsEngine = UniversalClsEngine

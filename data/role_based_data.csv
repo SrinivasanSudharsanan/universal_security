@@ -1,0 +1,8 @@
+id,user_role,allowed_actions,permission_level,description
+1,admin,ALL,10,System Administrator
+2,engineering,READ_WRITE_EXECUTE,8,Engineering Team
+3,sales,READ_WRITE,6,Sales Team  
+4,hr,READ_WRITE,6,HR Team
+5,analyst,READ,4,Data Analyst
+6,public,READ,2,Public Access
+7,guest,NONE,0,Guest User

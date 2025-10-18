@@ -1,0 +1,54 @@
+{
+  "type": "index_parallel",
+  "spec": {
+    "ioConfig": {
+      "type": "index_parallel",
+      "inputSource": {
+        "type": "local",
+        "baseDir": "/home/srini/universal_security/data",
+        "filter": "column_security_data.csv"
+      },
+      "inputFormat": {
+        "type": "csv",
+        "findColumnsFromHeader": true,
+        "skipHeaderRows": 1
+      }
+    },
+    "tuningConfig": {
+      "type": "index_parallel",
+      "partitionsSpec": {
+        "type": "dynamic"
+      }
+    },
+    "dataSchema": {
+      "dataSource": "sensitive_columns_data",
+      "timestampSpec": {
+        "column": "!!!_no_such_column_!!!",
+        "missingValue": "2023-01-01"
+      },
+      "dimensionsSpec": {
+        "dimensions": [
+          "ssn",
+          "email",
+          "phone",
+          "address",
+          "credit_card",
+          "medical_info",
+          "public_info"
+        ]
+      },
+      "metricsSpec": [
+        {
+          "name": "count",
+          "type": "count"
+        }
+      ],
+      "granularitySpec": {
+        "type": "uniform",
+        "segmentGranularity": "YEAR",
+        "queryGranularity": "NONE",
+        "rollup": false
+      }
+    }
+  }
+}

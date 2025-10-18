@@ -1,0 +1,5 @@
+{"sale_id": 101, "product": "Product-A", "amount": 5000, "customer": "Company-X", "region": "North", "quarter": "Q1", "timestamp": "2024-01-15T00:00:00Z"}
+{"sale_id": 102, "product": "Product-B", "amount": 3000, "customer": "Company-Y", "region": "South", "quarter": "Q1", "timestamp": "2024-01-16T00:00:00Z"}
+{"sale_id": 103, "product": "Product-C", "amount": 7500, "customer": "Company-Z", "region": "East", "quarter": "Q1", "timestamp": "2024-01-17T00:00:00Z"}
+{"sale_id": 104, "product": "Product-A", "amount": 4500, "customer": "Company-X", "region": "North", "quarter": "Q2", "timestamp": "2024-04-15T00:00:00Z"}
+{"sale_id": 105, "product": "Product-B", "amount": 6000, "customer": "Company-W", "region": "West", "quarter": "Q2", "timestamp": "2024-04-16T00:00:00Z"}
