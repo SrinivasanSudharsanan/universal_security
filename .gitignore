@@ -1,0 +1,27 @@
+# Virtual environment
+venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and local data
+*.log
+*.sqlite3
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+*.egg
