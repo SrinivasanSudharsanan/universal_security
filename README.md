@@ -22,91 +22,63 @@ High Performance – Uses policy caching and asynchronous operations for efficie
 
 No Code Changes Required – Security enforcement is fully transparent to applications.
 
-Architecture
-Universal Security System
-├── Security Engine
-│   ├── Column-Level Security (CLS)
-│   ├── Role-Based Access Control  
-│   └── Data Masking Engine
-├── Database Connectors
-│   ├── Druid Connector + CLS
-│   ├── PostgreSQL Connector
-│   └── Universal CLS Engine
-├── Policy Management
-│   ├── Database-Driven Policies
-│   └── Real-time Policy Enforcement
-└── Audit & Monitoring
-    ├── Security Event Logging
-    └── Compliance Reporting
 
-Installation
-Prerequisites
+###Installation Prerequisites
 
 Python 3.8+
-
 PostgreSQL 12+
-
 Apache Druid (optional)
-
 MySQL (optional)
-
 Quick Start
 
-Clone the repository
-
+###Clone the repository
 git clone https://github.com/yourusername/universal_security.git
 cd universal_security
 
 
 Set up a virtual environment
-
 python -m venv venv
 source venv/bin/activate      # Linux/Mac
 venv\Scripts\activate         # Windows
 
 
-Install dependencies
-
+###Install dependencies
 pip install -r requirements.txt
-
-
 Set up the database
-
 psql -h localhost -U postgres -c "CREATE DATABASE universal_security;"
 psql -h localhost -U postgres -d universal_security -f setup_cls_tables.sql
 
 
 Configure environment variables
-
 cp .env.example .env
-# Edit .env with your database credentials
+Edit .env with your database credentials
 
-Demo and Testing
+##Demo and Testing
 
-Run a comprehensive demo:
+###Run a comprehensive demo:
 
 python cls_demo.py
 
 
-Test the CLS engine:
+###Test the CLS engine:
 
 python test_cls_complete.py
 
 
-Test Druid integration:
+###Test Druid integration:
 
 python test_cls_integration.py
 
 Configuration
 Database Configuration
 
-Edit app/utils/db_utils.py with your PostgreSQL credentials:
+###Edit app/utils/db_utils.py with your PostgreSQL credentials:
 
 POSTGRES_URL = "postgresql://username:password@localhost:5432/universal_security"
 
 Druid Configuration
 
-Update connection parameters:
+###Update connection parameters:
 
 druid_config = {
     'host': 'localhost',
